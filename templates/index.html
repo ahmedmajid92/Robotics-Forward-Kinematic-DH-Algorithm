@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COMAU Smart Six 6-1.4 Kinematic Simulator</title>
+    <style>
+        body { margin: 0; font-family: Arial, sans-serif; background-color: #f0f0f0; }
+        #container { width: 100%; height: 100vh; display: flex; }
+        #canvas-container { flex-grow: 1; }
+        #controls { width: 350px; padding: 20px; background-color: #fff; box-shadow: -2px 0 5px rgba(0,0,0,0.1); overflow-y: auto; }
+        .slider-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .joint-info { font-size: 0.85em; color: #666; margin-top: 2px; }
+        input[type="range"] { width: 100%; }
+        h2 { margin-top: 0; color: #333; }
+        h3 { color: #666; font-size: 0.9em; margin: 5px 0; }
+        .reset-btn { width: 100%; padding: 10px; margin-top: 10px; background: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 14px; }
+        .reset-btn:hover { background: #0056b3; }
+        .preset-btn { width: 100%; padding: 8px; margin-top: 8px; background: #28a745; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 13px; }
+        .preset-btn:hover { background: #218838; }
+        .presets-section { margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 4px; border: 1px solid #dee2e6; }
+        .presets-section h4 { margin: 0 0 10px 0; color: #495057; font-size: 14px; }
+        .info-box { margin-top: 20px; padding: 15px; background: #e7f3ff; border-radius: 4px; border: 1px solid #b3d9ff; }
+        .info-box strong { color: #004085; }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="controls">
+            <h2>COMAU Smart Six 6-1.4</h2>
+            <h3>Forward Kinematics Simulator</h3>
+            
+            <div class="slider-group">
+                <label for="q1">Joint 1 (Base): <span id="q1_val">0.00</span>°</label>
+                <div class="joint-info">Range: -170° to +170°</div>
+                <input type="range" id="q1" min="-2.967" max="2.967" step="0.01" value="0">
+            </div>
+            
+            <div class="slider-group">
+                <label for="q2">Joint 2 (Shoulder): <span id="q2_val">0.00</span>°</label>
+                <div class="joint-info">Range: -85° to +155°</div>
+                <input type="range" id="q2" min="-1.484" max="2.705" step="0.01" value="0">
+            </div>
+            
+            <div class="slider-group">
+                <label for="q3">Joint 3 (Elbow): <span id="q3_val">0.00</span>°</label>
+                <div class="joint-info">Range: -170° to +158°</div>
+                <input type="range" id="q3" min="-2.967" max="2.758" step="0.01" value="0">
+            </div>
+            
+            <div class="slider-group">
+                <label for="q4">Joint 4 (Wrist Roll): <span id="q4_val">0.00</span>°</label>
+                <div class="joint-info">Range: -270° to +270°</div>
+                <input type="range" id="q4" min="-4.712" max="4.712" step="0.01" value="0">
+            </div>
+            
+            <div class="slider-group">
+                <label for="q5">Joint 5 (Wrist Pitch): <span id="q5_val">0.00</span>°</label>
+                <div class="joint-info">Range: -130° to +130°</div>
+                <input type="range" id="q5" min="-2.269" max="2.269" step="0.01" value="0">
+            </div>
+            
+            <div class="slider-group">
+                <label for="q6">Joint 6 (Wrist Yaw): <span id="q6_val">0.00</span>°</label>
+                <div class="joint-info">Range: -270° to +270°</div>
+                <input type="range" id="q6" min="-4.712" max="4.712" step="0.01" value="0">
+            </div>
+            
+            <button class="reset-btn" onclick="resetJoints()">Reset to Home Position</button>
+            
+            <div class="presets-section">
+                <h4>📋 Paper Test Configurations</h4>
+                <button class="preset-btn" onclick="loadPreset('home')">q_z: Home (0.87, 0, 1.17)</button>
+                <button class="preset-btn" onclick="loadPreset('rotation')">q_r: 90° Base Rotation</button>
+                <button class="preset-btn" onclick="loadPreset('singular')">q_s: Singular (0.45, 0, 0.87)</button>
+                <button class="preset-btn" onclick="loadPreset('numerical')">q_n: Numerical (1.19, 0, 0.50)</button>
+            </div>
+            
+            <div class="info-box">
+                <strong>End-Effector Position:</strong><br>
+                X: <span id="ee_x">0.000</span> m<br>
+                Y: <span id="ee_y">0.000</span> m<br>
+                Z: <span id="ee_z">0.000</span> m
+            </div>
+        </div>
+        <div id="canvas-container"></div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="/static/main.js"></script>
+</body>
+</html>
