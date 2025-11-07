@@ -1,0 +1,461 @@
+================================================================================
+  COMAU SMART SIX 6-1.4 FORWARD KINEMATICS SIMULATOR
+  INSTALLATION AND USAGE INSTRUCTIONS
+================================================================================
+
+TABLE OF CONTENTS
+=================
+1. Environment Setup
+2. File Descriptions
+3. Running the Files
+4. Common Issues and Troubleshooting
+5. Quick Start Guide
+
+
+================================================================================
+1. ENVIRONMENT SETUP
+================================================================================
+
+METHOD A: Using Conda (Recommended)
+------------------------------------
+Step 1: Create the environment from the provided file
+  $ conda env create -f environment.yml
+
+Step 2: Activate the environment
+  $ conda activate comau_env
+
+Step 3: Verify installation
+  $ python -c "import roboticstoolbox; print('Installation successful!')"
+
+METHOD B: Using pip
+-------------------
+Step 1: Create a virtual environment
+  $ python -m venv venv
+
+Step 2: Activate the virtual environment
+  - On Windows:
+    $ venv\Scripts\activate
+  - On Linux/Mac:
+    $ source venv/bin/activate
+
+Step 3: Install dependencies manually
+  $ pip install numpy==1.26.4
+  $ pip install roboticstoolbox-python
+  $ pip install spatialmath-python
+  $ pip install scipy
+  $ pip install matplotlib
+  $ pip install flask
+
+Step 4: Verify installation
+  $ python -c "import roboticstoolbox; print('Installation successful!')"
+
+DEACTIVATING THE ENVIRONMENT
+-----------------------------
+When you're done working:
+  $ conda deactivate   # For conda
+  $ deactivate         # For pip venv
+
+
+================================================================================
+2. FILE DESCRIPTIONS
+================================================================================
+
+CORE FILES (Main System Components)
+------------------------------------
+
+1. comau_model.py
+   Purpose: Robot model definition using Denavit-Hartenberg parameters
+   Contains: 
+     - create_comau_robot() function
+     - DH parameters for all 6 joints
+     - Joint limits and offsets
+   Dependencies: roboticstoolbox, spatialmath, numpy
+   Can run standalone: Yes (prints model summary and validates home position)
+
+2. app.py
+   Purpose: Flask web server providing the API and web interface
+   Contains:
+     - Route '/' - serves the web interface
+     - Route '/fkine' - POST endpoint for forward kinematics calculations
+   Dependencies: Flask, numpy, comau_model.py
+   Runs on: http://127.0.0.1:5000 (default Flask port)
+   Note: Must keep running to use the web interface
+
+3. validate_fk.py
+   Purpose: Validates the robot model against paper's test cases
+   Contains:
+     - Four test configurations from Guida et al. (2019) paper
+     - Error calculations and reporting
+     - Tolerance checking (50mm default)
+   Dependencies: numpy, comau_model.py
+   Output: Detailed validation report with pass/fail status
+
+UTILITY FILES (Helper Scripts)
+-------------------------------
+
+4. calibrate_a1.py
+   Purpose: Finds the optimal value for the 'a1' DH parameter
+   Method: Brute-force search from 0-200mm in 1mm increments
+   Use case: When you need to recalibrate the shoulder offset parameter
+   Output: Optimal a1 value that minimizes error for home position
+
+5. find_all_configs.py
+   Purpose: Searches for joint configurations that reach target positions
+   Method: Grid search across joint space
+   Use case: Finding alternative joint configurations for q_s and q_n
+   Output: List of valid configurations within 50mm tolerance
+
+6. find_qn_config.py
+   Purpose: Specifically searches for the q_n configuration
+   Target: Position [1.19, 0.0, 0.501] from paper
+   Method: Focused grid search
+
+7. find_qs_config.py
+   Purpose: Specifically searches for the q_s configuration
+   Target: Position [0.45, 0.0, 0.87] from paper
+   Method: Focused grid search
+
+8. debug_dh.py
+   Purpose: Debugging tool for DH parameter testing
+   Use case: Troubleshooting transformation matrices and frame positions
+
+9. diagnose_frames.py
+   Purpose: Diagnostic tool for analyzing coordinate frames
+   Use case: Visualizing individual frame transformations
+
+WEB INTERFACE FILES
+-------------------
+
+10. templates/index.html
+    Purpose: HTML structure for the web interface
+    Contains: UI elements, sliders, buttons, 3D canvas
+
+11. static/main.js
+    Purpose: JavaScript for 3D visualization using Three.js
+    Contains: Robot rendering, user controls, API communication
+
+12. static/three.min.js
+    Purpose: Three.js library (3D graphics engine)
+
+
+================================================================================
+3. RUNNING THE FILES
+================================================================================
+
+IMPORTANT: Always activate the environment before running any file!
+  $ conda activate comau_env
+
+-----------------------------------------------------------
+FILE: comau_model.py
+PURPOSE: Test the robot model definition
+HOW TO RUN:
+  $ python comau_model.py
+
+EXPECTED OUTPUT:
+  - Robot model summary with DH parameters
+  - Validation at home position [0,0,0,0,0,0]
+  - Calculated vs Expected position comparison
+  - Error in millimeters
+
+TYPICAL USE CASE:
+  - Verify the robot model is correctly defined
+  - Check home position accuracy
+  - Quick sanity check after modifying parameters
+
+-----------------------------------------------------------
+FILE: validate_fk.py
+PURPOSE: Validate model against all four paper test cases
+HOW TO RUN:
+  $ python validate_fk.py
+
+EXPECTED OUTPUT:
+  - Table with 4 test configurations
+  - Calculated positions vs Reference positions
+  - Error for each configuration
+  - Overall pass/fail status
+  - Summary of joint configurations used
+
+EXIT CODE:
+  - 0 if all tests pass
+  - 1 if any test fails
+
+TYPICAL USE CASE:
+  - After modifying DH parameters
+  - Before demonstrating the project
+  - To verify the implementation matches the paper
+
+-----------------------------------------------------------
+FILE: app.py
+PURPOSE: Run the web-based simulator
+HOW TO RUN:
+  $ python app.py
+
+EXPECTED OUTPUT:
+  - "COMAU Smart Six 6-1.4 robot model loaded."
+  - Model summary
+  - "Running on http://127.0.0.1:5000"
+
+NEXT STEPS:
+  1. Keep the terminal running (do not close it)
+  2. Open a web browser
+  3. Navigate to: http://127.0.0.1:5000
+  4. Use the interface:
+     - Move sliders to adjust joint angles
+     - Click preset buttons (q_z, q_r, q_s, q_n)
+     - View 3D robot visualization
+     - See end-effector position in real-time
+
+TO STOP THE SERVER:
+  - Press Ctrl+C in the terminal
+
+TYPICAL USE CASE:
+  - Interactive demonstration
+  - Testing different joint configurations
+  - Visualizing robot poses
+  - Teaching forward kinematics concepts
+
+-----------------------------------------------------------
+FILE: calibrate_a1.py
+PURPOSE: Find optimal shoulder offset parameter
+HOW TO RUN:
+  $ python calibrate_a1.py
+
+EXPECTED OUTPUT:
+  - Search progress
+  - Optimal a1 value in mm and meters
+  - Resulting position vs target
+  - Error in millimeters
+
+WHEN TO USE:
+  - If home position validation fails
+  - When adapting the code for a different robot variant
+  - For understanding how a1 affects the kinematics
+
+TYPICAL RUNTIME: 1-2 seconds
+
+-----------------------------------------------------------
+FILE: find_all_configs.py
+PURPOSE: Search for alternative joint configurations
+HOW TO RUN:
+  $ python find_all_configs.py
+
+EXPECTED OUTPUT:
+  - List of configurations for q_s within tolerance
+  - List of configurations for q_n within tolerance
+  - Best configuration for each target
+  - Position and error for each solution
+
+WHEN TO USE:
+  - Finding alternative solutions to reach same position
+  - Understanding the robot's workspace
+  - Inverse kinematics exploration
+
+TYPICAL RUNTIME: 30-60 seconds (depends on grid resolution)
+
+-----------------------------------------------------------
+FILES: find_qn_config.py, find_qs_config.py
+PURPOSE: Find specific configurations
+HOW TO RUN:
+  $ python find_qn_config.py
+  $ python find_qs_config.py
+
+EXPECTED OUTPUT:
+  - Configurations that reach the specific target
+  - Best configuration found
+  - Error analysis
+
+WHEN TO USE:
+  - Focused search for a specific paper test case
+  - Faster than find_all_configs.py for single targets
+
+-----------------------------------------------------------
+FILES: debug_dh.py, diagnose_frames.py
+PURPOSE: Debugging and diagnostic tools
+HOW TO RUN:
+  $ python debug_dh.py
+  $ python diagnose_frames.py
+
+EXPECTED OUTPUT:
+  - Detailed transformation matrices
+  - Frame-by-frame analysis
+  - Diagnostic information
+
+WHEN TO USE:
+  - Troubleshooting incorrect positions
+  - Understanding transformation matrices
+  - Educational purposes (learning DH conventions)
+
+
+================================================================================
+4. COMMON ISSUES AND TROUBLESHOOTING
+================================================================================
+
+ISSUE: "ModuleNotFoundError: No module named 'roboticstoolbox'"
+SOLUTION: 
+  - Ensure the conda environment is activated: conda activate comau_env
+  - Or reinstall: conda install -c conda-forge roboticstoolbox-python
+
+ISSUE: "Address already in use" when running app.py
+SOLUTION:
+  - Another instance is running. Press Ctrl+C in the other terminal
+  - Or change the port: app.run(debug=True, port=5001)
+
+ISSUE: Web page loads but robot doesn't appear
+SOLUTION:
+  - Check browser console (F12) for JavaScript errors
+  - Ensure three.min.js is in the static/ folder
+  - Try refreshing the page (Ctrl+F5)
+
+ISSUE: Validation fails with large errors
+SOLUTION:
+  - Check if you modified comau_model.py accidentally
+  - Verify DH parameters match the documentation
+  - Run calibrate_a1.py to find correct offset
+
+ISSUE: Sliders don't update the robot
+SOLUTION:
+  - Check if app.py is running in the terminal
+  - Verify the Flask server shows no errors
+  - Check browser console for API errors
+
+ISSUE: "conda: command not found"
+SOLUTION:
+  - Install Anaconda or Miniconda
+  - Or use the pip method instead
+
+
+================================================================================
+5. QUICK START GUIDE
+================================================================================
+
+FOR FIRST TIME USERS:
+---------------------
+1. Install Conda (if not already installed)
+   Download from: https://docs.conda.io/en/latest/miniconda.html
+
+2. Create and activate environment:
+   $ conda env create -f environment.yml
+   $ conda activate comau_env
+
+3. Test the installation:
+   $ python validate_fk.py
+   (You should see all 4 tests pass)
+
+4. Run the simulator:
+   $ python app.py
+
+5. Open browser to: http://127.0.0.1:5000
+
+6. Try the preset buttons and sliders!
+
+FOR DEMONSTRATIONS:
+-------------------
+1. Activate environment:
+   $ conda activate comau_env
+
+2. Validate the model (optional but recommended):
+   $ python validate_fk.py
+
+3. Start web interface:
+   $ python app.py
+
+4. In browser: http://127.0.0.1:5000
+   - Click "Home (q_z)" button - robot goes to home position
+   - Click "Rotate (q_r)" button - base rotates 90 degrees
+   - Click "Singular (q_s)" button - extended singular configuration
+   - Click "Numerical (q_n)" button - numerical example from paper
+   - Use sliders for custom joint angles
+
+FOR DEVELOPERS:
+---------------
+1. Read DOCS.md for theoretical background
+
+2. Start with comau_model.py to understand the robot definition
+
+3. Run validate_fk.py to see how testing works
+
+4. Explore app.py to understand the API
+
+5. Check static/main.js for 3D visualization code
+
+6. Use debug tools (debug_dh.py, diagnose_frames.py) as needed
+
+
+================================================================================
+WORKFLOW EXAMPLES
+================================================================================
+
+EXAMPLE 1: Validating a Modified Model
+---------------------------------------
+$ conda activate comau_env
+$ python comau_model.py              # Quick check
+$ python validate_fk.py              # Full validation
+$ python app.py                      # Visual confirmation
+
+EXAMPLE 2: Finding a New Configuration
+---------------------------------------
+$ conda activate comau_env
+$ python find_all_configs.py         # Search for configs
+# Edit validate_fk.py to add new test case
+$ python validate_fk.py              # Verify it works
+
+EXAMPLE 3: Presenting to Students
+----------------------------------
+$ conda activate comau_env
+$ python validate_fk.py              # Show validation results
+$ python app.py                      # Start web demo
+# In browser, demonstrate preset configurations and manual control
+# Explain how joint angles affect end-effector position
+
+
+================================================================================
+ENVIRONMENT VARIABLES (Advanced)
+================================================================================
+
+You can set these environment variables to customize behavior:
+
+FLASK_ENV=development       # Enable Flask debug mode
+FLASK_APP=app.py           # Specify Flask application file
+FLASK_RUN_PORT=5001        # Change default port
+
+Example:
+$ export FLASK_RUN_PORT=5001
+$ python app.py              # Now runs on port 5001
+
+
+================================================================================
+FILE DEPENDENCY TREE
+================================================================================
+
+comau_model.py (no dependencies within project)
+  ├── validate_fk.py
+  ├── app.py
+  │   └── templates/index.html
+  │       └── static/main.js
+  │           └── static/three.min.js
+  ├── calibrate_a1.py
+  ├── find_all_configs.py
+  ├── find_qn_config.py
+  ├── find_qs_config.py
+  ├── debug_dh.py
+  └── diagnose_frames.py
+
+
+================================================================================
+NOTES
+================================================================================
+
+- All Python files use radians for joint angles internally
+- The web interface displays angles in degrees for user convenience
+- The paper uses degrees, so test cases convert deg2rad
+- Joint 2 has a 90° offset (paper's convention: zero = shoulder horizontal)
+- Validation tolerance is 50mm (can be adjusted in validate_fk.py)
+- The web server must remain running to use the interface
+- Press Ctrl+C to stop the web server
+- Always activate the conda environment before running any Python file
+
+
+================================================================================
+END OF INSTRUCTIONS
+================================================================================
+
